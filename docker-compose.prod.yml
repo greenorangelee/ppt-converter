@@ -1,0 +1,19 @@
+# Production: pulls pre-built images from DockerHub instead of building locally
+# Usage: docker compose -f docker-compose.prod.yml up -d
+services:
+  backend:
+    image: ${DOCKERHUB_USERNAME}/ppt-converter-backend:latest
+    volumes:
+      - ppt_storage:/app/storage
+    restart: unless-stopped
+
+  frontend:
+    image: ${DOCKERHUB_USERNAME}/ppt-converter-frontend:latest
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  ppt_storage:
