@@ -1,9 +1,10 @@
 import os
 import uuid
-from fastapi import APIRouter, UploadFile, File, HTTPException, Header, BackgroundTasks
+from fastapi import APIRouter, UploadFile, File, HTTPException, BackgroundTasks
 from fastapi.responses import FileResponse
 
 from ..services.ppt_service import convert_ppt
+from .settings import load_settings
 
 router = APIRouter()
 
@@ -23,7 +24,6 @@ def _cleanup(*paths: str):
 async def convert_presentation(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
-    x_api_key: str = Header(..., description="Anthropic Claude API Key"),
 ):
     if not file.filename.lower().endswith(".pptx"):
         raise HTTPException(status_code=400, detail="PPTX 파일만 업로드 가능합니다.")
@@ -31,8 +31,9 @@ async def convert_presentation(
     if not os.path.exists(TEMPLATE_PATH):
         raise HTTPException(status_code=400, detail="회사 템플릿이 등록되지 않았습니다. 먼저 템플릿을 업로드해 주세요.")
 
-    if not x_api_key.startswith("sk-ant-"):
-        raise HTTPException(status_code=400, detail="유효한 Claude API 키를 입력해 주세요.")
+    api_key = load_settings().get("api_key", "")
+    if not api_key:
+        raise HTTPException(status_code=400, detail="Claude API 키가 등록되지 않았습니다. 설정에서 먼저 등록해 주세요.")
 
     os.makedirs("storage/output", exist_ok=True)
 
@@ -45,7 +46,7 @@ async def convert_presentation(
         f.write(content)
 
     try:
-        await convert_ppt(TEMPLATE_PATH, input_path, output_path, x_api_key)
+        await convert_ppt(TEMPLATE_PATH, input_path, output_path, api_key)
     except ValueError as e:
         _cleanup(input_path, output_path)
         raise HTTPException(status_code=400, detail=str(e))
@@ -54,12 +55,10 @@ async def convert_presentation(
         raise HTTPException(status_code=500, detail=f"변환 중 오류가 발생했습니다: {str(e)}")
 
     original_stem = os.path.splitext(file.filename)[0]
-    download_name = f"{original_stem}_converted.pptx"
-
     background_tasks.add_task(_cleanup, input_path, output_path)
 
     return FileResponse(
         output_path,
         media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
-        filename=download_name,
+        filename=f"{original_stem}_converted.pptx",
     )

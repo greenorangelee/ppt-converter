@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from .routers import template, convert
+from .routers import template, convert, settings
 
 app = FastAPI(title="PPT Template Converter")
 
@@ -20,6 +20,7 @@ os.makedirs("storage/output", exist_ok=True)
 
 app.include_router(template.router, prefix="/api/template", tags=["template"])
 app.include_router(convert.router, prefix="/api/convert", tags=["convert"])
+app.include_router(settings.router, prefix="/api/settings", tags=["settings"])
 
 app.mount("/storage", StaticFiles(directory="storage"), name="storage")
 

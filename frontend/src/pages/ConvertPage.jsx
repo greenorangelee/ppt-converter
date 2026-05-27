@@ -2,27 +2,17 @@ import { useState } from 'react'
 import FileDropzone from '../components/FileDropzone'
 import { convertPPT } from '../services/api'
 
-const STORAGE_KEY = 'claude_api_key'
-
 export default function ConvertPage() {
   const [file, setFile] = useState(null)
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem(STORAGE_KEY) || '')
-  const [showKey, setShowKey] = useState(false)
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState(null)
 
-  function handleKeyChange(e) {
-    const val = e.target.value
-    setApiKey(val)
-    localStorage.setItem(STORAGE_KEY, val)
-  }
-
   async function handleConvert() {
-    if (!file || !apiKey.trim()) return
+    if (!file) return
     setLoading(true)
     setMsg(null)
     try {
-      const blob = await convertPPT(file, apiKey.trim())
+      const blob = await convertPPT(file)
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -40,30 +30,8 @@ export default function ConvertPage() {
     }
   }
 
-  const canConvert = file && apiKey.trim().length > 0 && !loading
-
   return (
     <>
-      <div className="card">
-        <p className="card-title">Claude API 키</p>
-        <div className="api-key-wrapper">
-          <label>API Key</label>
-          <div className="api-key-field">
-            <input
-              type={showKey ? 'text' : 'password'}
-              placeholder="sk-ant-..."
-              value={apiKey}
-              onChange={handleKeyChange}
-              spellCheck={false}
-            />
-            <button className="btn btn-secondary" onClick={() => setShowKey(v => !v)}>
-              {showKey ? '숨기기' : '표시'}
-            </button>
-          </div>
-          <p className="api-key-hint">키는 브라우저에만 저장되며 서버에 보관되지 않습니다.</p>
-        </div>
-      </div>
-
       <div className="card">
         <p className="card-title">PPT 변환</p>
         <p className="section-label">변환할 PPTX 파일</p>
@@ -77,7 +45,7 @@ export default function ConvertPage() {
         )}
 
         <div className="btn-row">
-          <button className="btn btn-primary" onClick={handleConvert} disabled={!canConvert}>
+          <button className="btn btn-primary" onClick={handleConvert} disabled={!file || loading}>
             {loading ? <><span className="spinner" /> 변환 중...</> : '템플릿 적용 후 다운로드'}
           </button>
         </div>
@@ -93,7 +61,6 @@ export default function ConvertPage() {
           <li>텍스트 내용은 최대한 보존하며 회사 템플릿 레이아웃에 맞게 재배치합니다.</li>
           <li>이미지, 차트, 표는 현재 버전에서 지원하지 않습니다.</li>
           <li>변환 품질은 원본 PPT의 구조와 등록된 템플릿의 레이아웃 수에 따라 달라집니다.</li>
-          <li>API 호출 비용은 사용자의 Claude API 계정에서 차감됩니다.</li>
         </ul>
       </div>
     </>

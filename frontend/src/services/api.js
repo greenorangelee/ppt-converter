@@ -29,14 +29,29 @@ export async function deleteTemplate() {
   return (await handleResponse(res)).json()
 }
 
-export async function convertPPT(file, apiKey) {
+export async function getApiKeyStatus() {
+  const res = await fetch(`${BASE}/settings/api-key`)
+  return (await handleResponse(res)).json()
+}
+
+export async function saveApiKey(apiKey) {
+  const res = await fetch(`${BASE}/settings/api-key`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ api_key: apiKey }),
+  })
+  return (await handleResponse(res)).json()
+}
+
+export async function deleteApiKey() {
+  const res = await fetch(`${BASE}/settings/api-key`, { method: 'DELETE' })
+  return (await handleResponse(res)).json()
+}
+
+export async function convertPPT(file) {
   const fd = new FormData()
   fd.append('file', file)
-  const res = await fetch(`${BASE}/convert/`, {
-    method: 'POST',
-    headers: { 'x-api-key': apiKey },
-    body: fd,
-  })
+  const res = await fetch(`${BASE}/convert/`, { method: 'POST', body: fd })
   await handleResponse(res)
   return res.blob()
 }
