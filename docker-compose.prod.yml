@@ -4,7 +4,7 @@ services:
   backend:
     image: green0ran9e/ppt-converter-backend:latest
     volumes:
-      - ppt_storage:/app/storage
+      - /home/docker/dockhand/data/stacks/ppt-converter/storage:/app/storage
     restart: unless-stopped
 
   frontend:
@@ -14,6 +14,3 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
-
-volumes:
-  ppt_storage:
